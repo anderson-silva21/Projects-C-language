@@ -14,6 +14,7 @@ void imprimeMatriz(double **m, int linha, int coluna) {//criei essa função par
             printf(" %05.2lf ", m[i][j]); //coloquei para imprimir com no maximo 5 caracteres, incluindo o ponto decimal. Caso o número seja pequeno e não ocupe 5 caracteres, colocar zeros a esqueda para preencher.
         printf("\n");
     }
+    printf("\n");
 }
 
 int main() {
