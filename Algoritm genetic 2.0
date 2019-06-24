@@ -7,11 +7,21 @@
 void imprimirpop(int **matriz) {
     for (int i = 0; i < ind_pop; i++) {
         for (int j = 0; j <= num_cidades; j++) {
-
             printf("%i\t", matriz[i][j]);
         }
         printf("\n");
     }
+}
+
+void desaloc(int **individuo, double **dist_cidades) {
+    for (int i = 0; i < ind_pop; i++) {
+        free(individuo[i]);
+    }
+    for (int i = 0; i < num_cidades; i++) {
+        free(dist_cidades[i]);
+    }
+    free(individuo);
+    free(dist_cidades);
 }
 
 void criar_populacao(int **individuo) {
@@ -19,7 +29,7 @@ void criar_populacao(int **individuo) {
     printf("\n\n-------------------------------------------------\n\n");
     srand(time(NULL)); //iniciar uma "semente" (seed) aleatória ==> srand = seed randômica
     for (int a = 0; a < ind_pop; a++) {//percorre as linhas da matriz
-        for (int b = 0; b < num_cidades; b++) {//percorre as colunas da matriz
+        for (int b = 0; b <= num_cidades; b++) {//percorre as colunas da matriz
             individuo[a][b] = b + 1;
             if (b == num_cidades) {
                 individuo[a][b] = 1;
@@ -35,7 +45,6 @@ void criar_populacao(int **individuo) {
     printf("\nPopulação Aleatorizada: \n");
     for (int i = 0; i < ind_pop; i++) {
         for (int j = 0; j <= num_cidades; j++) {
-
             printf("%i\t", individuo[i][j]);
         }
         printf("\n");
@@ -63,34 +72,30 @@ int main() { // No main abaixo está sendo implementado a situação que o usuá
     for (int i = 0; i < ind_pop; i++) {
         individuo[i] = (int *) malloc(num_cidades * sizeof (int));
     }
-    printf("Número de cidades: 5\n");
-    double **dist_cidades;
+    double **dist_cidades = NULL;
     dist_cidades = (double **) malloc(num_cidades * sizeof (double *));
     for (int i = 0; i < num_cidades; i++) {
         dist_cidades[i] = (double *) malloc(num_cidades * sizeof (double));
     }
+    FILE *arq = NULL; // Ponteiro para acessar arquivo .txt
+    arq = fopen("dist_cidades.txt", "r"); // Será buscado um arquivo de nome 'dist_cidades.txt' e está apenas para leitura
+    if (arq == NULL) {//Arquivo nulo nao será aberto e encerrará o programa.
+        printf("Erro ao abrir o arquivo\n\n");
+        exit(1);
+    }
     for (int i = 0; i < num_cidades; i++) {
         for (int j = 0; j < num_cidades; j++) {
-            if (j == i) {
-                dist_cidades[i][j] = 0;
-                continue;
-            } else if (j > i) {
-                printf("Distância da cidade [%i] até a cidade [%i]\t", i, j);
-                scanf("%lf", &dist_cidades[i][j]);
-            } else
-                dist_cidades[i][j] = dist_cidades[j][i];
+            fscanf(arq, "%lf", &dist_cidades[i][j]);
         }
     }
-    printf("\n");
     for (int i = 0; i < num_cidades; i++) {
         for (int j = 0; j < num_cidades; j++) {
-            printf("%.1lf\t", dist_cidades[i][j]);
+            printf("%lf\t", dist_cidades[i][j]);
         }
         printf("\n");
     }
     criar_populacao(individuo);
     elitismo(individuo, dist_cidades);
-
+    desaloc(individuo, dist_cidades);
     return 0;
-
 }
