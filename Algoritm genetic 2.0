@@ -1,17 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#define num_cidades 5
+#define num_cidades 20//trabalhar para implementar o arquivo txt.
 #define ind_pop 20
-
-void imprimirpop(int **matriz) {
-    for (int i = 0; i < ind_pop; i++) {
-        for (int j = 0; j <= num_cidades; j++) {
-            printf("%i\t", matriz[i][j]);
-        }
-        printf("\n");
-    }
-}
 
 void desaloc(int **individuo, double **dist_cidades) {
     for (int i = 0; i < ind_pop; i++) {
@@ -26,7 +17,7 @@ void desaloc(int **individuo, double **dist_cidades) {
 
 void criar_populacao(int **individuo) {
     int i = 0, j = 0, temp = 0;
-    printf("\n\n-------------------------------------------------\n\n");
+    printf("\n\n-------------------------------------------------------------------------------------------------------------------------------\n\n");
     srand(time(NULL)); //iniciar uma "semente" (seed) aleatória ==> srand = seed randômica
     for (int a = 0; a < ind_pop; a++) {//percorre as linhas da matriz
         for (int b = 0; b <= num_cidades; b++) {//percorre as colunas da matriz
@@ -45,7 +36,7 @@ void criar_populacao(int **individuo) {
     printf("\nPopulação Aleatorizada: \n");
     for (int i = 0; i < ind_pop; i++) {
         for (int j = 0; j <= num_cidades; j++) {
-            printf("%i\t", individuo[i][j]);
+            printf("%i   ", individuo[i][j]);
         }
         printf("\n");
     }
@@ -60,17 +51,131 @@ void elitismo(int **matrizpop, double **tabelacaixeiro) {
             vetor_dist[i] += tabelacaixeiro[matrizpop[i][j] - 1][matrizpop[i][j + 1] - 1];
         }
     }
+    printf("\n\nSomas:\n\n");
     for (int k = 0; k < ind_pop; k++) {
-        printf("%.1lf\t", vetor_dist[k]);
+        printf("%.1lf|", vetor_dist[k]);
     }
-    free(vetor_dist);
+}
+
+int selecaoTorneio(int **individuo, double **tabelacaixeiro) {
+    int qtdSelecionados = 3; //geralmente um valor inteiro pequeno >=2...
+    //A variavel qtdSelecionados controla quantos individuos da população vão ser selecionados aleatoriamente para competir.
+    // Se um valor muito alto for escolhido, mais chances dos melhores individuos sempre serem selecionados. Como consequencia...
+    // ... o algoritmo vai convergir mais rapidamente para a resposta (geralmente não tão boa).
+    // com valores pequenos como 2 e 3, simulamos mais o comportamento da natureza. Na "sorte", individuos ruins e medianos podem ser escolhidos e...
+    // ...pelo crossover/mutação podem gerar individuos excelentes (soluções muito boas).
+    int indicePai[ind_pop], indiceMelhorPai;
+    double *vetor_dist = NULL, menor_dist;
+    vetor_dist = (double *) malloc(ind_pop * sizeof (double));
+    for (int i = 0; i < qtdSelecionados; i++) {
+        indicePai[i] = rand() % ind_pop; //indica a linha que está o individuo
+        vetor_dist[i] = 0; //zerando a distancia do candidato ao pai i
+        for (int j = 0; j < num_cidades; j++)
+            vetor_dist[i] += tabelacaixeiro[individuo[indicePai[i]][j] - 1][individuo[indicePai[i]][j + 1] - 1];
+    }//não tem problema os pais serem iguais
+    //agora é preciso comparar qual dos "qtdSelecionados" é o melhor individuo;
+    menor_dist = vetor_dist[0];
+    indiceMelhorPai = indicePai[0]; //supodo inicialmente que o melhor pai é o primeiro dos selecionaodos para o torneio
+    for (int i = 0; i < qtdSelecionados; i++) {
+        if (vetor_dist[i] < menor_dist) {//caso encontre um individuo com uma rota menor
+            menor_dist = vetor_dist[i]; //troca a informação da menor rota
+            indiceMelhorPai = indicePai[i]; //guarda o índice do pai com a menor rota
+        }
+    }
+    //só para testar, apagar depois
+    
+    printf("\n\n--------- DENTRO DA SELECAO -------\n");
+    for (int i = 0; i < qtdSelecionados; i++)
+        printf("Indice na matriz de populacao: %d, dist: %f\n", indicePai[i], vetor_dist[i]);
+    printf("\n\n\tO melhor pai é: %d\n", indiceMelhorPai);
+    free(vetor_dist); //desalocando o vetor vetor_dist
+    return indiceMelhorPai; //retornando para função main o indice do pai escolhido
+}
+
+void ordercross(int indice_pai1, int indice_pai2, int **individuo) {
+    
+    int pai1[num_cidades], pai2[num_cidades];
+    int filho1[num_cidades], filho2[num_cidades];
+    int corte1 = 7, corte2 = 13;
+    int achou; //zero = nao achou, um  = achou
+    printf("Pai 1 recebido na funcao\n");
+    
+    for(int i =0; i<num_cidades+1; i++){
+        pai1[i] = individuo[indice_pai1][i];
+        pai2[i]= individuo[indice_pai2][i];
+    }
+    
+    for (int i = 0; i < num_cidades+1; i++) {
+        printf("%i ", pai1[i]);
+    }
+    printf("\nPai 2 recebido na funcao\n");
+    for (int i = 0; i < num_cidades + 1; i++) {
+        printf("%i ", pai2[i]);
+    }
+    for (int i = corte1; i < corte2; i++) {
+        filho1[i] = pai1[i];
+        filho2[i] = pai2[i];
+    }
+    printf("\nFilho 2... trocado parte central com o Pai 1\n");
+    for (int i = 0; i < num_cidades + 1; i++) {
+        printf("%i ", filho2[i]);
+    }
+    //rotacionando os pais
+    for (int j = 0; j < corte2; j++) {
+        int tmp1 = pai1[0];
+        int tmp2 = pai2[0];
+        for (int i = 0; i < num_cidades+1; i++) {
+            pai1[i] = pai1[i + 1];
+            pai2[i] = pai2[i + 1];
+        }
+        pai1[num_cidades+1] = tmp1;
+        pai2[num_cidades+1] = tmp2;
+    }
+    //rotacionando os filhos
+    for (int j = 0; j < corte1; j++) {
+        int tmp1 = filho1[0];
+        int tmp2 = filho2[0];
+        for (int i = 0; i < num_cidades+1; i++) {
+            filho1[i] = filho1[i + 1];
+            filho2[i] = filho2[i + 1];
+        }
+        filho1[num_cidades+1] = tmp1;
+        filho2[num_cidades+] = tmp2;
+    }
+    //fim rotacao filhos
+    printf("\nFilho 2... apos rotacao\n");
+    for (int i = 0; i < num_cidades + 1; i++) {
+        printf("%i ", filho2[i]);
+    }
+    /*for (int i = 0; i < num_cidades+1; i++) {
+        printf("%i", vetor[i]);
+    }*/
+    int tamFilho = num_cidades + 1 - corte2 + corte1;
+    printf("**%i\n", tamFilho);
+    for (int j = 0; j < (num_cidades + 1 - corte1); j++) {
+        achou = 0;
+        for (int i = 0; i < tamFilho; i++) {
+            if (pai1[i] == filho2[i]) {
+                achou = 1;
+                break; //sai do for i<tamFilho
+            }
+        }
+        if (achou == 0) { // o filho nao contem o elemento do pai
+            filho2[tamFilho] = pai1[j];
+            tamFilho++;
+        }
+    }
+    printf("\nFilho 2... Apos o crossover\n");
+    for (int i = 0; i < num_cidades + 1; i++) {
+        printf("%i\t", filho2[i]);
+    }
 }
 
 int main() { // No main abaixo está sendo implementado a situação que o usuário quer resolver.
-    int **individuo = NULL;
+    int **individuo = NULL, indicePai1, indicePai2;
     individuo = (int **) malloc(ind_pop * sizeof (int *));
     for (int i = 0; i < ind_pop; i++) {
-        individuo[i] = (int *) malloc(num_cidades * sizeof (int));
+        individuo[i] = (int *) malloc((num_cidades +1)* sizeof (int));
     }
     double **dist_cidades = NULL;
     dist_cidades = (double **) malloc(num_cidades * sizeof (double *));
@@ -78,7 +183,7 @@ int main() { // No main abaixo está sendo implementado a situação que o usuá
         dist_cidades[i] = (double *) malloc(num_cidades * sizeof (double));
     }
     FILE *arq = NULL; // Ponteiro para acessar arquivo .txt
-    arq = fopen("dist_cidades.txt", "r"); // Será buscado um arquivo de nome 'dist_cidades.txt' e está apenas para leitura
+    arq = fopen("distancia_cidades.txt", "r"); // Será buscado um arquivo de nome 'dist_cidades.txt' e está apenas para leitura
     if (arq == NULL) {//Arquivo nulo nao será aberto e encerrará o programa.
         printf("Erro ao abrir o arquivo\n\n");
         exit(1);
@@ -90,12 +195,21 @@ int main() { // No main abaixo está sendo implementado a situação que o usuá
     }
     for (int i = 0; i < num_cidades; i++) {
         for (int j = 0; j < num_cidades; j++) {
-            printf("%lf\t", dist_cidades[i][j]);
+            printf("%.2lf ", dist_cidades[i][j]);
         }
         printf("\n");
     }
     criar_populacao(individuo);
     elitismo(individuo, dist_cidades);
+    //COMEÇO DO LOOP
+    indicePai1 = selecaoTorneio(individuo, dist_cidades); //chama a funcao para selecionar o primeiro pai
+    indicePai2 = selecaoTorneio(individuo, dist_cidades); //chama a funcao para selecionar o segundo pai
+    //agora precisa fazer o crossover dos individuos cujos indices na matriz são "indicePai1" e "indicePai2"
+    //Em seguida, sobre os filhos gerados, aplicar mutação com uma probabilidade pequena de chances
+    //Depois colocar os filhos na população, substituindo os piores. Não esquecer de sempre guardar o melhor individuo da população
+    //Por fim...recomeçar da seleção e repetir tudo novamente
+    //FIM DO LOOP
+    ordercross(indicePai1, indicePai2, individuo);
     desaloc(individuo, dist_cidades);
     return 0;
 }
