@@ -43,18 +43,20 @@ void criar_populacao(int **individuo) {
 }
 
 void elitismo(int **matrizpop, double **tabelacaixeiro) {
+    printf("\n-------------------------------------------------------------------------------------------------------------------------------");
     double *vetor_dist = NULL;
     vetor_dist = (double *) malloc(ind_pop * sizeof (double));
     for (int i = 0; i < ind_pop; i++) {
         vetor_dist[i] = 0;
-        for (int j = 0; j < num_cidades; j++) {
+        for (int j = 0; j < num_cidades + 1; j++) {
             vetor_dist[i] += tabelacaixeiro[matrizpop[i][j] - 1][matrizpop[i][j + 1] - 1];
         }
     }
-    printf("\n\nSomas:\n\n");
+    printf("\n\nSomas:\n\n|");
     for (int k = 0; k < ind_pop; k++) {
         printf("%.1lf|", vetor_dist[k]);
     }
+    printf("\n-------------------------------------------------------------------------------------------------------------------------------\n");
 }
 
 int selecaoTorneio(int **individuo, double **tabelacaixeiro) {
@@ -83,39 +85,39 @@ int selecaoTorneio(int **individuo, double **tabelacaixeiro) {
         }
     }
     //só para testar, apagar depois
-    
     printf("\n\n--------- DENTRO DA SELECAO -------\n");
     for (int i = 0; i < qtdSelecionados; i++)
-        printf("Indice na matriz de populacao: %d, dist: %f\n", indicePai[i], vetor_dist[i]);
-    printf("\n\n\tO melhor pai é: %d\n", indiceMelhorPai);
+        printf("Indice na matriz de populacao: %d, dist: %.2f\n", indicePai[i], vetor_dist[i]);
+    printf("\n\tO melhor pai é: %d\n", indiceMelhorPai);
     free(vetor_dist); //desalocando o vetor vetor_dist
     return indiceMelhorPai; //retornando para função main o indice do pai escolhido
 }
 
 void ordercross(int indice_pai1, int indice_pai2, int **individuo) {
-    
-    int pai1[num_cidades], pai2[num_cidades];
-    int filho1[num_cidades], filho2[num_cidades];
+    int pai1[num_cidades+1], pai2[num_cidades+1];
+    int filho1[num_cidades+1], filho2[num_cidades+1];
     int corte1 = 7, corte2 = 13;
     int achou; //zero = nao achou, um  = achou
+    printf("\n-------------------------------------------------------------------------------------------------------------------------------\n\n");
     printf("Pai 1 recebido na funcao\n");
-    
-    for(int i =0; i<num_cidades+1; i++){
+    for (int i = 0; i < num_cidades + 1; i++) {
         pai1[i] = individuo[indice_pai1][i];
-        pai2[i]= individuo[indice_pai2][i];
+        pai2[i] = individuo[indice_pai2][i];
     }
-    
-    for (int i = 0; i < num_cidades+1; i++) {
+    for (int i = 0; i < num_cidades + 1; i++) {
         printf("%i ", pai1[i]);
     }
-    printf("\nPai 2 recebido na funcao\n");
+    printf("\n");
+    printf("\nPai 2 recebido na funcao\n\n");
     for (int i = 0; i < num_cidades + 1; i++) {
         printf("%i ", pai2[i]);
     }
+    printf("\n-------------------------------------------------------------------------------------------------------------------------------\n");
     for (int i = corte1; i < corte2; i++) {
         filho1[i] = pai1[i];
         filho2[i] = pai2[i];
     }
+    printf("\n");
     printf("\nFilho 2... trocado parte central com o Pai 1\n");
     for (int i = 0; i < num_cidades + 1; i++) {
         printf("%i ", filho2[i]);
@@ -124,23 +126,23 @@ void ordercross(int indice_pai1, int indice_pai2, int **individuo) {
     for (int j = 0; j < corte2; j++) {
         int tmp1 = pai1[0];
         int tmp2 = pai2[0];
-        for (int i = 0; i < num_cidades+1; i++) {
+        for (int i = 0; i < num_cidades; i++) {
             pai1[i] = pai1[i + 1];
             pai2[i] = pai2[i + 1];
         }
-        pai1[num_cidades+1] = tmp1;
-        pai2[num_cidades+1] = tmp2;
+        pai1[num_cidades] = tmp1;
+        pai2[num_cidades] = tmp2;
     }
     //rotacionando os filhos
     for (int j = 0; j < corte1; j++) {
         int tmp1 = filho1[0];
         int tmp2 = filho2[0];
-        for (int i = 0; i < num_cidades+1; i++) {
+        for (int i = 0; i < num_cidades; i++) {
             filho1[i] = filho1[i + 1];
             filho2[i] = filho2[i + 1];
         }
-        filho1[num_cidades+1] = tmp1;
-        filho2[num_cidades+] = tmp2;
+        filho1[num_cidades] = tmp1;
+        filho2[num_cidades] = tmp2;
     }
     //fim rotacao filhos
     printf("\nFilho 2... apos rotacao\n");
@@ -175,7 +177,7 @@ int main() { // No main abaixo está sendo implementado a situação que o usuá
     int **individuo = NULL, indicePai1, indicePai2;
     individuo = (int **) malloc(ind_pop * sizeof (int *));
     for (int i = 0; i < ind_pop; i++) {
-        individuo[i] = (int *) malloc((num_cidades +1)* sizeof (int));
+        individuo[i] = (int *) malloc((num_cidades + 1) * sizeof (int));
     }
     double **dist_cidades = NULL;
     dist_cidades = (double **) malloc(num_cidades * sizeof (double *));
@@ -190,12 +192,14 @@ int main() { // No main abaixo está sendo implementado a situação que o usuá
     }
     for (int i = 0; i < num_cidades; i++) {
         for (int j = 0; j < num_cidades; j++) {
-            fscanf(arq, "%lf", &dist_cidades[i][j]);
+            fscanf(arq, "%lf ", &dist_cidades[i][j]);
         }
+        fgetc(arq);
     }
+    printf("Distancias entre as 20 cidades recebidas do arquivo:\n\n");
     for (int i = 0; i < num_cidades; i++) {
         for (int j = 0; j < num_cidades; j++) {
-            printf("%.2lf ", dist_cidades[i][j]);
+            printf("%.2lf  ", dist_cidades[i][j]);
         }
         printf("\n");
     }
